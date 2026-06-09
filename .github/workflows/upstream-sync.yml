@@ -5,8 +5,8 @@ permissions:
 
 on:
   schedule:
-    - cron: "0 23 * * *" # 北京时间每天早上7点（UTC前一天23点）
-  workflow_dispatch: # 保留手动触发按钮
+    - cron: "0 23 * * *" # 北京时间每天早上7点
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -18,17 +18,23 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 强制同步上游（保留自身工作流，无权限错误）
+      - name: 同步上游（彻底清除所有上游工作流文件）
         run: |
           git config --global user.name "bot"
           git config --global user.email "bot@github.com"
           git remote add upstream https://github.com/364254633/edgetunnel.git
           git fetch upstream
           
-          # 关键：保留你自己的工作流，不同步 .github 文件夹，彻底解决权限报错
+          # 1. 拉取上游所有文件
           git checkout upstream/main -- .
+          
+          # 2. 关键：彻底删除整个.github目录（包括上游新增的所有工作流）
+          rm -rf .github
+          
+          # 3. 恢复你自己的.github目录（只保留你的upstream-sync.yml）
           git checkout HEAD -- .github/
           
+          # 4. 提交并推送
           git add .
           git commit -m "同步上游最新代码" || echo "没有需要同步的更新"
           git push origin main --force
