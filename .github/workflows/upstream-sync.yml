@@ -5,30 +5,30 @@ permissions:
 
 on:
   schedule:
-    - cron: "0 0 * * *" # 每天凌晨0点自动同步
-  workflow_dispatch: # 允许手动触发
+    - cron: "0 23 * * *" # 北京时间每天早上7点（UTC前一天23点）
+  workflow_dispatch: # 保留手动触发按钮
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: 检出当前仓库
+      - name: 检出代码
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 配置Git用户
+      - name: 强制同步上游（保留自身工作流，无权限错误）
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: 添加上游仓库并拉取
-        run: |
+          git config --global user.name "bot"
+          git config --global user.email "bot@github.com"
           git remote add upstream https://github.com/364254633/edgetunnel.git
-          git fetch upstream --force
-
-      - name: 强制同步上游代码（覆盖本地，无合并冲突）
-        run: |
-          git reset --hard upstream/main
+          git fetch upstream
+          
+          # 关键：保留你自己的工作流，不同步 .github 文件夹，彻底解决权限报错
+          git checkout upstream/main -- .
+          git checkout HEAD -- .github/
+          
+          git add .
+          git commit -m "同步上游最新代码" || echo "没有需要同步的更新"
           git push origin main --force
