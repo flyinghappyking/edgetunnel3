@@ -22,7 +22,7 @@ jobs:
         run: |
           git config --global user.name "bot"
           git config --global user.email "bot@github.com"
-          git remote add upstream https://github.com/364254633/edgetunnel.git
+          git remote add upstream https://github.com/cmliu/edgetunnel.git
           git fetch upstream
           
           # 1. 拉取上游所有文件
